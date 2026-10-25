@@ -45,7 +45,7 @@ def train(policy, model, opt, batches, accum):
             with policy.forward_context():
                 loss_sum, _ = toy_loss(model, ids)
             policy.backward(loss_sum / n_tokens)
-            loss_total += float(loss_sum)
+            loss_total += loss_sum.item()
         policy.unscale_once_if_needed(opt)
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         rec = policy.optimizer_step_and_update_scaler(opt)
