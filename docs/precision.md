@@ -106,6 +106,12 @@ cuDNN headers via `CUDNN_PATH`, HPC SDK `math_libs/12.9` on `CPATH`/`LIBRARY_PAT
 recorded in each job's `environment.txt`. Reproduce the build with the commands in
 `scripts/build_env.sbatch` plus the paths above.
 
+**Without `delta_bcrc` access** (still DeltaAI GH200 only; the wheel is aarch64/sm_90):
+`bash scripts/install_env_from_wheel.sh ~/envs/dipdesk` installs the same stack in ~5 min from the
+prebuilt `wheels/transformer_engine_torch-2.20.2-cp312-cp312-linux_aarch64.whl` (no TE compile),
+then `export DIPDESK_VENV=~/envs/dipdesk; source scripts/env.sh`. Set `HF_HOME`/`DIPDESK_CACHE` to
+your own dirs for jobs that load Qwen. Verified 2026-11-01 (job 3501245): `fp8_toy_proof.py` PASS.
+
 ## Stand-in runner
 
 `src/pilot_runner.py` is a P2-only Qwen2.5-1.5B + LoRA loop used for the midterm pilots because
