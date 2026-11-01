@@ -60,11 +60,8 @@ def rel_l2(x, ref):
 # ----- mode vocabulary --------------------------------------------------------
 
 
-def test_reserved_modes_are_named_but_not_implemented():
+def test_mode_vocabulary_is_frozen():
     assert {"fp32", "bf16", "fp16", "bf16_te", "fp8_te"} == set(MODES)
-    for mode in ("bf16_te", "fp8_te"):
-        with pytest.raises(NotImplementedError):
-            build_precision_policy(mode)
     with pytest.raises(ValueError):
         build_precision_policy("fp8")
 
@@ -280,6 +277,7 @@ def test_no_direct_amp_calls_outside_precision_module():
         if path.name == "precision.py":
             continue
         text = path.read_text()
-        if "autocast(" in text or "GradScaler(" in text:
+        # fp8_backend.py defines the te.autocast wrapper; only precision.py may call it.
+        if path.name != "fp8_backend.py" and ("autocast(" in text or "GradScaler(" in text):
             offenders.append(path.name)
     assert offenders == []

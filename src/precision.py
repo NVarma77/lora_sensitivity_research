@@ -31,13 +31,22 @@ from pathlib import Path
 
 import torch
 
-# Modes implemented in P2-A. The TE modes are reserved for P2-B so that the
-# config vocabulary is frozen before FP8 work lands.
-IMPLEMENTED_MODES = ("fp32", "bf16", "fp16")
-RESERVED_MODES = ("bf16_te", "fp8_te")
-MODES = IMPLEMENTED_MODES + RESERVED_MODES
+# torch AMP modes (P2-A) and Transformer Engine modes (P2-B). bf16_te is the
+# backend-matched control for fp8_te: same converted te.Linear modules, FP8 off
+# (handbook §3.5, §8.5 step 8). Both TE modes run everything else under BF16
+# autocast, so the TE FP8 recipe is the only difference between them.
+TORCH_AMP_MODES = ("fp32", "bf16", "fp16")
+TE_MODES = ("bf16_te", "fp8_te")
+IMPLEMENTED_MODES = TORCH_AMP_MODES + TE_MODES
+MODES = IMPLEMENTED_MODES
 
-_AUTOCAST_DTYPE = {"fp32": None, "bf16": torch.bfloat16, "fp16": torch.float16}
+_AUTOCAST_DTYPE = {
+    "fp32": None,
+    "bf16": torch.bfloat16,
+    "fp16": torch.float16,
+    "bf16_te": torch.bfloat16,
+    "fp8_te": torch.bfloat16,
+}
 
 
 class PrecisionProtocolError(RuntimeError):
@@ -67,11 +76,8 @@ class PrecisionPolicy:
         growth_factor: float = 2.0,
         backoff_factor: float = 0.5,
         growth_interval: int = 2000,
+        fp8_recipe=None,
     ):
-        if mode in RESERVED_MODES:
-            raise NotImplementedError(
-                f"precision mode {mode!r} is reserved for the TE backend (task P2-B)"
-            )
         if mode not in IMPLEMENTED_MODES:
             raise ValueError(f"unknown precision mode {mode!r}; expected one of {MODES}")
 
@@ -80,6 +86,18 @@ class PrecisionPolicy:
         self.autocast_dtype = _AUTOCAST_DTYPE[mode]
         self.allow_tf32 = allow_tf32
         _configure_tf32(allow_tf32)
+
+        self.uses_te = mode in TE_MODES
+        self.fp8_enabled = mode == "fp8_te"
+        self.fp8_recipe_config = None
+        self._te_recipe = None
+        if self.uses_te:
+            import fp8_backend
+
+            fp8_backend.require_te()
+            if self.fp8_enabled:
+                self.fp8_recipe_config = fp8_recipe or fp8_backend.FP8RecipeConfig()
+                self._te_recipe = fp8_backend.build_recipe(self.fp8_recipe_config)
 
         self.scaler = None
         if mode == "fp16":
@@ -107,10 +125,22 @@ class PrecisionPolicy:
     # ----- forward / backward -------------------------------------------------
 
     def forward_context(self):
-        """Wrap the forward pass and loss computation; backward stays outside."""
+        """Wrap the forward pass and loss computation; backward stays outside.
+
+        TE modes nest the TE context inside BF16 autocast: te.Linear GEMMs use
+        FP8 (fp8_te) or BF16 (bf16_te); every other op follows torch autocast.
+        Backward runs outside and inherits the recorded recipe (§8.5 step 5).
+        """
         if self.autocast_dtype is None:
             return contextlib.nullcontext()
-        return torch.autocast(self.device_type, dtype=self.autocast_dtype)
+        if not self.uses_te:
+            return torch.autocast(self.device_type, dtype=self.autocast_dtype)
+        import fp8_backend
+
+        stack = contextlib.ExitStack()
+        stack.enter_context(torch.autocast(self.device_type, dtype=self.autocast_dtype))
+        stack.enter_context(fp8_backend.te_autocast(enabled=self.fp8_enabled, recipe=self._te_recipe))
+        return stack
 
     def backward(self, loss: torch.Tensor) -> None:
         if self._unscaled:
@@ -217,7 +247,9 @@ class PrecisionPolicy:
         """Machine-readable record of what this policy actually configured."""
         m = {
             "mode": self.mode,
-            "backend": "torch_amp" if self.autocast_dtype is not None else "eager",
+            "backend": (
+                "transformer_engine" if self.uses_te else "torch_amp" if self.autocast_dtype is not None else "eager"
+            ),
             "device_type": self.device_type,
             "autocast_enabled": self.autocast_dtype is not None,
             "autocast_dtype": str(self.autocast_dtype) if self.autocast_dtype else None,
@@ -236,6 +268,12 @@ class PrecisionPolicy:
                 "device": torch.cuda.get_device_name() if torch.cuda.is_available() else None,
             },
         }
+        if self.uses_te:
+            import fp8_backend
+
+            m["transformer_engine"] = fp8_backend.backend_manifest(self.fp8_recipe_config, self.fp8_enabled)
+            if model is not None:
+                m["transformer_engine"]["module_inventory"] = fp8_backend.te_module_inventory(model)
         if model is not None:
             m["parameter_dtypes"] = _param_dtype_summary(model)
         if optimizer is not None:

@@ -1,13 +1,13 @@
-# Precision policies (P2-A)
+# Precision policies (P2-A, P2-B)
 
-Owner: Person 2. Handbook refs: §5.2 (contract), §8.1–8.3 (policies), §13.1 (FP16 audit), §16.1 (task).
+Owner: Person 2. Handbook refs: §5.2 (contract), §8 (policies), §13.1 (FP16 audit), §16.1–16.2 (tasks).
 
 ## Use
 
 ```python
 from precision import build_precision_policy
 
-policy = build_precision_policy(cfg.precision.mode)   # "fp32" | "bf16" | "fp16"
+policy = build_precision_policy(cfg.precision.mode)   # "fp32" | "bf16" | "fp16" | "bf16_te" | "fp8_te"
 for effective_batch in stream:
     opt.zero_grad(set_to_none=True)
     for micro in microbatches:
@@ -33,22 +33,26 @@ Rules for callers:
 - Under DDP (P3): gradients are all-reduced before unscale, so every rank sees the same
   inf/NaN result and skips together. Do not unscale inside `no_sync()` microbatches.
 
-`fp8_te` and `bf16_te` are reserved mode names; they raise `NotImplementedError` until P2-B.
+TE modes need the model's linears converted to `te.Linear` *before* LoRA is attached
+(`fp8_backend.convert_linears_to_te(model)`; P1's `te_conversion.py` should take this over).
+PEFT 0.21 then wraps them in `peft.tuners.lora.te.TeLinear`. `bf16_te` is the backend-matched
+control for `fp8_te`: same converted modules, same weights, FP8 recipe off.
 
 ## Dtype policy matrix
 
-| | fp32 | bf16 | fp16 |
-|---|---|---|---|
-| Autocast | off | `bfloat16` | `float16` |
-| Matmul / linear compute | FP32 (TF32 off) | BF16 | FP16 |
-| LayerNorm, softmax, log-softmax, loss | FP32 | FP32 (autocast fp32 list) | FP32 (autocast fp32 list) |
-| Loss reduction | FP32 (`logits.float()` + sum) | FP32 | FP32 |
-| Trainable params (master) | FP32 | FP32 | FP32 |
-| Gradients stored on params | FP32 | FP32 | FP32 (scaled until unscale) |
-| AdamW moments | FP32 | FP32 | FP32 |
-| Loss scaling | none | none | dynamic `GradScaler`, init 2^16, x2 growth / 2000 steps, x0.5 backoff |
-| Nonfinite gradients | update skipped, logged | update skipped, logged | update skipped by scaler, scale backed off, logged |
-| TF32 (`allow_tf32`, matmul precision) | off / `highest` | off / `highest` | off / `highest` |
+| | fp32 | bf16 | fp16 | bf16_te | fp8_te |
+|---|---|---|---|---|---|
+| Autocast | off | `bfloat16` | `float16` | `bfloat16` + TE (FP8 off) | `bfloat16` + TE FP8 |
+| Backbone decoder linears (q/k/v/o/gate/up/down) | FP32 (TF32 off) | BF16 | FP16 | te.Linear BF16 | te.Linear FP8: E4M3 fwd, E5M2 grads (HYBRID, delayed scaling, amax history 16, max) |
+| LoRA adapters (lora_A/lora_B), lm_head, attention SDPA | FP32 | BF16 | FP16 | BF16 | BF16 |
+| RMSNorm/LayerNorm, softmax, log-softmax, loss | FP32 | FP32 (autocast fp32 list) | FP32 (autocast fp32 list) | FP32 | FP32 |
+| Loss reduction | FP32 (`logits.float()` + sum) | FP32 | FP32 | FP32 | FP32 |
+| Trainable params (master) | FP32 | FP32 | FP32 | FP32 | FP32 |
+| Gradients stored on params | FP32 | FP32 | FP32 (scaled until unscale) | FP32 | FP32 |
+| AdamW moments | FP32 | FP32 | FP32 | FP32 | FP32 |
+| Loss scaling | none | none | dynamic `GradScaler`, init 2^16, x2 growth / 2000 steps, x0.5 backoff | none | none (TE per-tensor FP8 scales) |
+| Nonfinite gradients | update skipped, logged | update skipped, logged | update skipped by scaler, scale backed off, logged | skipped, logged | skipped, logged |
+| TF32 (`allow_tf32`, matmul precision) | off / `highest` | off / `highest` | off / `highest` | off | off |
 
 TF32 is disabled globally for every mode so the autocast dtype is the only arithmetic
 difference between policies. Frozen backbone dtype depends on how `model.py` loads the
@@ -90,3 +94,20 @@ attempted/successful/skipped updates), `parity_steps.csv` and `manifest_<mode>.j
    above X% of attempts. `policy.consecutive_skips` / `skipped_steps` expose the counters.
 4. FP16 attempt budget: how many extra attempts are allowed to reach 800 successful updates.
 5. TF32 off for all modes (implemented; confirm).
+
+## Environment (DeltaAI GH200, built 2026-10-31)
+
+`scripts/env.sh` activates `/projects/bcrc/nvarma2/envs/dipdesk`: a venv on top of
+`python/miniforge3_pytorch/2.10.0` (torch 2.10.0+cu129) with transformers 4.57.6, peft 0.21.2 and
+Transformer Engine 2.20.2 built from source for sm_90. Building TE needed three fixes:
+cuDNN headers via `CUDNN_PATH`, HPC SDK `math_libs/12.9` on `CPATH`/`LIBRARY_PATH`, and cuDNN ≥ 9.12
+(TE static assert). **Deviation:** the venv overrides torch's pinned cuDNN 9.10.2 with
+`nvidia-cudnn-cu12==9.27.0.42` (installed `--no-deps`). Every mode runs on this same stack; it is
+recorded in each job's `environment.txt`. Reproduce the build with the commands in
+`scripts/build_env.sbatch` plus the paths above.
+
+## Stand-in runner
+
+`src/pilot_runner.py` is a P2-only Qwen2.5-1.5B + LoRA loop used for the midterm pilots because
+P1's trainer was not available. Its outputs are pilots, not X01 cells. Delete it once P1's
+`train.py` can call `build_precision_policy` (see ADR-001).

@@ -1,0 +1,50 @@
+{
+  "mode": "fp8_te",
+  "backend": "transformer_engine",
+  "device_type": "cuda",
+  "autocast_enabled": true,
+  "autocast_dtype": "torch.bfloat16",
+  "grad_scaler": null,
+  "tf32": {
+    "requested_allow_tf32": false,
+    "cuda_matmul_allow_tf32": false,
+    "cudnn_allow_tf32": false,
+    "float32_matmul_precision": "highest"
+  },
+  "versions": {
+    "python": "3.12.9",
+    "torch": "2.10.0+cu129",
+    "cuda": "12.9",
+    "cudnn": 92700,
+    "device": "NVIDIA GH200 120GB"
+  },
+  "transformer_engine": {
+    "te_version": "2.20.2",
+    "autocast_api": "transformer_engine.pytorch.autocast",
+    "autocast_signature": "(enabled: 'bool' = True, calibrating: 'bool' = False, recipe: \"Optional['Recipe']\" = None, amax_reduction_group: \"Optional['dist_group_type']\" = None, _graph: 'bool' = False) -> 'None'",
+    "fp8_enabled": true,
+    "recipe": {
+      "name": "delayed_scaling",
+      "fp8_format": "HYBRID",
+      "amax_history_len": 16,
+      "amax_compute_algo": "max",
+      "margin": 0
+    },
+    "fp8_dim_multiple": 16,
+    "notes": "FP8 applies only to te.Linear GEMMs (forward E4M3, backward grads E5M2 under HYBRID). Adapters (PEFT TeLinear lora_A/lora_B), norms, attention, softmax, embeddings, lm_head and loss run under torch BF16 autocast or FP32.",
+    "fp8_available": false,
+    "reason": "te.fp8 missing",
+    "module_inventory": {
+      "te_linear": 196,
+      "eager_linear": 113
+    }
+  },
+  "parameter_dtypes": {
+    "trainable": {
+      "torch.float32": 2179072
+    },
+    "frozen": {
+      "torch.float32": 1543714304
+    }
+  }
+}

@@ -1,0 +1,235 @@
+diff --git a/.gitignore b/.gitignore
+index b12d127..4f6c09f 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,3 +1,7 @@
+ logs/
+ __pycache__/
+ .pytest_cache/
++results/dev_smoke/
++*.nsys-rep
++*.sqlite
++profile_trace.json
+diff --git a/docs/precision.md b/docs/precision.md
+index e3815a5..547f485 100644
+--- a/docs/precision.md
++++ b/docs/precision.md
+@@ -1,13 +1,13 @@
+-# Precision policies (P2-A)
++# Precision policies (P2-A, P2-B)
+ 
+-Owner: Person 2. Handbook refs: §5.2 (contract), §8.1–8.3 (policies), §13.1 (FP16 audit), §16.1 (task).
++Owner: Person 2. Handbook refs: §5.2 (contract), §8 (policies), §13.1 (FP16 audit), §16.1–16.2 (tasks).
+ 
+ ## Use
+ 
+ ```python
+ from precision import build_precision_policy
+ 
+-policy = build_precision_policy(cfg.precision.mode)   # "fp32" | "bf16" | "fp16"
++policy = build_precision_policy(cfg.precision.mode)   # "fp32" | "bf16" | "fp16" | "bf16_te" | "fp8_te"
+ for effective_batch in stream:
+     opt.zero_grad(set_to_none=True)
+     for micro in microbatches:
+@@ -33,22 +33,26 @@ Rules for callers:
+ - Under DDP (P3): gradients are all-reduced before unscale, so every rank sees the same
+   inf/NaN result and skips together. Do not unscale inside `no_sync()` microbatches.
+ 
+-`fp8_te` and `bf16_te` are reserved mode names; they raise `NotImplementedError` until P2-B.
++TE modes need the model's linears converted to `te.Linear` *before* LoRA is attached
++(`fp8_backend.convert_linears_to_te(model)`; P1's `te_conversion.py` should take this over).
++PEFT 0.21 then wraps them in `peft.tuners.lora.te.TeLinear`. `bf16_te` is the backend-matched
++control for `fp8_te`: same converted modules, same weights, FP8 recipe off.
+ 
+ ## Dtype policy matrix
+ 
+-| | fp32 | bf16 | fp16 |
+-|---|---|---|---|
+-| Autocast | off | `bfloat16` | `float16` |
+-| Matmul / linear compute | FP32 (TF32 off) | BF16 | FP16 |
+-| LayerNorm, softmax, log-softmax, loss | FP32 | FP32 (autocast fp32 list) | FP32 (autocast fp32 list) |
+-| Loss reduction | FP32 (`logits.float()` + sum) | FP32 | FP32 |
+-| Trainable params (master) | FP32 | FP32 | FP32 |
+-| Gradients stored on params | FP32 | FP32 | FP32 (scaled until unscale) |
+-| AdamW moments | FP32 | FP32 | FP32 |
+-| Loss scaling | none | none | dynamic `GradScaler`, init 2^16, x2 growth / 2000 steps, x0.5 backoff |
+-| Nonfinite gradients | update skipped, logged | update skipped, logged | update skipped by scaler, scale backed off, logged |
+-| TF32 (`allow_tf32`, matmul precision) | off / `highest` | off / `highest` | off / `highest` |
++| | fp32 | bf16 | fp16 | bf16_te | fp8_te |
++|---|---|---|---|---|---|
++| Autocast | off | `bfloat16` | `float16` | `bfloat16` + TE (FP8 off) | `bfloat16` + TE FP8 |
++| Backbone decoder linears (q/k/v/o/gate/up/down) | FP32 (TF32 off) | BF16 | FP16 | te.Linear BF16 | te.Linear FP8: E4M3 fwd, E5M2 grads (HYBRID, delayed scaling, amax history 16, max) |
++| LoRA adapters (lora_A/lora_B), lm_head, attention SDPA | FP32 | BF16 | FP16 | BF16 | BF16 |
++| RMSNorm/LayerNorm, softmax, log-softmax, loss | FP32 | FP32 (autocast fp32 list) | FP32 (autocast fp32 list) | FP32 | FP32 |
++| Loss reduction | FP32 (`logits.float()` + sum) | FP32 | FP32 | FP32 | FP32 |
++| Trainable params (master) | FP32 | FP32 | FP32 | FP32 | FP32 |
++| Gradients stored on params | FP32 | FP32 | FP32 (scaled until unscale) | FP32 | FP32 |
++| AdamW moments | FP32 | FP32 | FP32 | FP32 | FP32 |
++| Loss scaling | none | none | dynamic `GradScaler`, init 2^16, x2 growth / 2000 steps, x0.5 backoff | none | none (TE per-tensor FP8 scales) |
++| Nonfinite gradients | update skipped, logged | update skipped, logged | update skipped by scaler, scale backed off, logged | skipped, logged | skipped, logged |
++| TF32 (`allow_tf32`, matmul precision) | off / `highest` | off / `highest` | off / `highest` | off | off |
+ 
+ TF32 is disabled globally for every mode so the autocast dtype is the only arithmetic
+ difference between policies. Frozen backbone dtype depends on how `model.py` loads the
+@@ -90,3 +94,20 @@ attempted/successful/skipped updates), `parity_steps.csv` and `manifest_<mode>.j
+    above X% of attempts. `policy.consecutive_skips` / `skipped_steps` expose the counters.
+ 4. FP16 attempt budget: how many extra attempts are allowed to reach 800 successful updates.
+ 5. TF32 off for all modes (implemented; confirm).
++
++## Environment (DeltaAI GH200, built 2026-10-31)
++
++`scripts/env.sh` activates `/projects/bcrc/nvarma2/envs/dipdesk`: a venv on top of
++`python/miniforge3_pytorch/2.10.0` (torch 2.10.0+cu129) with transformers 4.57.6, peft 0.21.2 and
++Transformer Engine 2.20.2 built from source for sm_90. Building TE needed three fixes:
++cuDNN headers via `CUDNN_PATH`, HPC SDK `math_libs/12.9` on `CPATH`/`LIBRARY_PATH`, and cuDNN ≥ 9.12
++(TE static assert). **Deviation:** the venv overrides torch's pinned cuDNN 9.10.2 with
++`nvidia-cudnn-cu12==9.27.0.42` (installed `--no-deps`). Every mode runs on this same stack; it is
++recorded in each job's `environment.txt`. Reproduce the build with the commands in
++`scripts/build_env.sbatch` plus the paths above.
++
++## Stand-in runner
++
++`src/pilot_runner.py` is a P2-only Qwen2.5-1.5B + LoRA loop used for the midterm pilots because
++P1's trainer was not available. Its outputs are pilots, not X01 cells. Delete it once P1's
++`train.py` can call `build_precision_policy` (see ADR-001).
+diff --git a/src/precision.py b/src/precision.py
+index f9b0a3e..040634a 100644
+--- a/src/precision.py
++++ b/src/precision.py
+@@ -31,13 +31,22 @@ from pathlib import Path
+ 
+ import torch
+ 
+-# Modes implemented in P2-A. The TE modes are reserved for P2-B so that the
+-# config vocabulary is frozen before FP8 work lands.
+-IMPLEMENTED_MODES = ("fp32", "bf16", "fp16")
+-RESERVED_MODES = ("bf16_te", "fp8_te")
+-MODES = IMPLEMENTED_MODES + RESERVED_MODES
+-
+-_AUTOCAST_DTYPE = {"fp32": None, "bf16": torch.bfloat16, "fp16": torch.float16}
++# torch AMP modes (P2-A) and Transformer Engine modes (P2-B). bf16_te is the
++# backend-matched control for fp8_te: same converted te.Linear modules, FP8 off
++# (handbook §3.5, §8.5 step 8). Both TE modes run everything else under BF16
++# autocast, so the TE FP8 recipe is the only difference between them.
++TORCH_AMP_MODES = ("fp32", "bf16", "fp16")
++TE_MODES = ("bf16_te", "fp8_te")
++IMPLEMENTED_MODES = TORCH_AMP_MODES + TE_MODES
++MODES = IMPLEMENTED_MODES
++
++_AUTOCAST_DTYPE = {
++    "fp32": None,
++    "bf16": torch.bfloat16,
++    "fp16": torch.float16,
++    "bf16_te": torch.bfloat16,
++    "fp8_te": torch.bfloat16,
++}
+ 
+ 
+ class PrecisionProtocolError(RuntimeError):
+@@ -67,11 +76,8 @@ class PrecisionPolicy:
+         growth_factor: float = 2.0,
+         backoff_factor: float = 0.5,
+         growth_interval: int = 2000,
++        fp8_recipe=None,
+     ):
+-        if mode in RESERVED_MODES:
+-            raise NotImplementedError(
+-                f"precision mode {mode!r} is reserved for the TE backend (task P2-B)"
+-            )
+         if mode not in IMPLEMENTED_MODES:
+             raise ValueError(f"unknown precision mode {mode!r}; expected one of {MODES}")
+ 
+@@ -81,6 +87,18 @@ class PrecisionPolicy:
+         self.allow_tf32 = allow_tf32
+         _configure_tf32(allow_tf32)
+ 
++        self.uses_te = mode in TE_MODES
++        self.fp8_enabled = mode == "fp8_te"
++        self.fp8_recipe_config = None
++        self._te_recipe = None
++        if self.uses_te:
++            import fp8_backend
++
++            fp8_backend.require_te()
++            if self.fp8_enabled:
++                self.fp8_recipe_config = fp8_recipe or fp8_backend.FP8RecipeConfig()
++                self._te_recipe = fp8_backend.build_recipe(self.fp8_recipe_config)
++
+         self.scaler = None
+         if mode == "fp16":
+             self.scaler = torch.amp.GradScaler(
+@@ -107,10 +125,22 @@ class PrecisionPolicy:
+     # ----- forward / backward -------------------------------------------------
+ 
+     def forward_context(self):
+-        """Wrap the forward pass and loss computation; backward stays outside."""
++        """Wrap the forward pass and loss computation; backward stays outside.
++
++        TE modes nest the TE context inside BF16 autocast: te.Linear GEMMs use
++        FP8 (fp8_te) or BF16 (bf16_te); every other op follows torch autocast.
++        Backward runs outside and inherits the recorded recipe (§8.5 step 5).
++        """
+         if self.autocast_dtype is None:
+             return contextlib.nullcontext()
+-        return torch.autocast(self.device_type, dtype=self.autocast_dtype)
++        if not self.uses_te:
++            return torch.autocast(self.device_type, dtype=self.autocast_dtype)
++        import fp8_backend
++
++        stack = contextlib.ExitStack()
++        stack.enter_context(torch.autocast(self.device_type, dtype=self.autocast_dtype))
++        stack.enter_context(fp8_backend.te_autocast(enabled=self.fp8_enabled, recipe=self._te_recipe))
++        return stack
+ 
+     def backward(self, loss: torch.Tensor) -> None:
+         if self._unscaled:
+@@ -217,7 +247,9 @@ class PrecisionPolicy:
+         """Machine-readable record of what this policy actually configured."""
+         m = {
+             "mode": self.mode,
+-            "backend": "torch_amp" if self.autocast_dtype is not None else "eager",
++            "backend": (
++                "transformer_engine" if self.uses_te else "torch_amp" if self.autocast_dtype is not None else "eager"
++            ),
+             "device_type": self.device_type,
+             "autocast_enabled": self.autocast_dtype is not None,
+             "autocast_dtype": str(self.autocast_dtype) if self.autocast_dtype else None,
+@@ -236,6 +268,12 @@ class PrecisionPolicy:
+                 "device": torch.cuda.get_device_name() if torch.cuda.is_available() else None,
+             },
+         }
++        if self.uses_te:
++            import fp8_backend
++
++            m["transformer_engine"] = fp8_backend.backend_manifest(self.fp8_recipe_config, self.fp8_enabled)
++            if model is not None:
++                m["transformer_engine"]["module_inventory"] = fp8_backend.te_module_inventory(model)
+         if model is not None:
+             m["parameter_dtypes"] = _param_dtype_summary(model)
+         if optimizer is not None:
+diff --git a/tests/test_precision.py b/tests/test_precision.py
+index 389642b..bee1a6e 100644
+--- a/tests/test_precision.py
++++ b/tests/test_precision.py
+@@ -60,11 +60,8 @@ def rel_l2(x, ref):
+ # ----- mode vocabulary --------------------------------------------------------
+ 
+ 
+-def test_reserved_modes_are_named_but_not_implemented():
++def test_mode_vocabulary_is_frozen():
+     assert {"fp32", "bf16", "fp16", "bf16_te", "fp8_te"} == set(MODES)
+-    for mode in ("bf16_te", "fp8_te"):
+-        with pytest.raises(NotImplementedError):
+-            build_precision_policy(mode)
+     with pytest.raises(ValueError):
+         build_precision_policy("fp8")
+ 
+@@ -280,6 +277,7 @@ def test_no_direct_amp_calls_outside_precision_module():
+         if path.name == "precision.py":
+             continue
+         text = path.read_text()
+-        if "autocast(" in text or "GradScaler(" in text:
++        # fp8_backend.py defines the te.autocast wrapper; only precision.py may call it.
++        if path.name != "fp8_backend.py" and ("autocast(" in text or "GradScaler(" in text):
+             offenders.append(path.name)
+     assert offenders == []
