@@ -1,7 +1,0 @@
-logs/
-__pycache__/
-.pytest_cache/
-results/dev_smoke/
-*.nsys-rep
-*.sqlite
-profile_trace.json
