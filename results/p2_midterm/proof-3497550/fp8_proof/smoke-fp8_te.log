@@ -1,9 +1,0 @@
-[eval] update 0 val_loss 2.40753
-[train] attempt 10 update 10 loss 2.6191 gnorm 0.104 skip False scale nan 0.79s
-/sw/user/python/miniforge3-pytorch-2.10.0/lib/python3.12/site-packages/torch/profiler/profiler.py:217: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
-  _warn_once(
-[eval] update 15 val_loss 2.34308
-[train] attempt 20 update 20 loss 2.5438 gnorm 0.108 skip False scale nan 0.95s
-[train] attempt 30 update 30 loss 2.5925 gnorm 0.104 skip False scale nan 0.93s
-[eval] update 30 val_loss 2.32899
-{"run_id": "smoke-fp8_te", "status": "COMPLETED", "failure": null, "successful_updates": 30, "skipped_steps": 0, "only_lora_weights_updated": true}
