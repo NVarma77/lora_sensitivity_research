@@ -1,0 +1,11 @@
+reference: results/p3_tonight_3503458/smoke/P3SMOKE-bf16-r16-s0-N1  (N=1, status=COMPLETED)
+Traceback (most recent call last):
+  File "/u/bissoufouanaroua/lora_sensitivity_research/scripts/p3_compare_runs.py", line 48, in <module>
+    main()
+  File "/u/bissoufouanaroua/lora_sensitivity_research/scripts/p3_compare_runs.py", line 33, in main
+    rj, tr, ev = load(run)
+                 ^^^^^^^^^
+  File "/u/bissoufouanaroua/lora_sensitivity_research/scripts/p3_compare_runs.py", line 18, in load
+    rj = json.load(open(os.path.join(run, "run.json")))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'results/p3_tonight_3503458/smoke/P3SMOKE-bf16-r16-s0-N4/run.json'

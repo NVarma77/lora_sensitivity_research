@@ -1,0 +1,16 @@
+gh151.hsn.cm.delta.internal.ncsa.edu
+GPU 0: NVIDIA GH200 120GB (UUID: GPU-969d7468-8f33-2c69-1748-72cecf9e27db)
+	[4mGPU0	CPU Affinity	NUMA Affinity	GPU NUMA ID[0m
+GPU0	 X 	216-231	3		N/A
+
+Legend:
+
+  X    = Self
+  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)
+  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node
+  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)
+  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)
+  PIX  = Connection traversing at most a single PCIe bridge
+  NV#  = Connection traversing a bonded set of # NVLinks
+2.10.0+cu129 4.57.6 0.21.2 1
+TE 2.20.2

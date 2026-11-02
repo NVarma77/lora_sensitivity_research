@@ -1,0 +1,38 @@
+{
+  "source": "team precision.py",
+  "mode": "bf16",
+  "backend": "torch_amp",
+  "device_type": "cuda",
+  "autocast_enabled": true,
+  "autocast_dtype": "torch.bfloat16",
+  "grad_scaler": null,
+  "tf32": {
+    "requested_allow_tf32": false,
+    "cuda_matmul_allow_tf32": false,
+    "cudnn_allow_tf32": false,
+    "float32_matmul_precision": "highest"
+  },
+  "versions": {
+    "python": "3.12.9",
+    "torch": "2.10.0+cu129",
+    "cuda": "12.9",
+    "cudnn": 92700,
+    "device": "NVIDIA GH200 120GB"
+  },
+  "parameter_dtypes": {
+    "trainable": {
+      "torch.float32": 2179072
+    },
+    "frozen": {
+      "torch.float32": 1543714304
+    }
+  },
+  "optimizer": {
+    "class": "AdamW",
+    "state_dtypes": {
+      "step:torch.float32": 112,
+      "exp_avg:torch.float32": 2179072,
+      "exp_avg_sq:torch.float32": 2179072
+    }
+  }
+}

@@ -1,0 +1,56 @@
+[21:30:37] GPUs: 1
+[21:30:37] START 01_pytest
+[21:30:46] END   01_pytest rc=0 9s :: 35 passed in 7.54s
+[21:30:46] START 02_toy_N1
+[21:30:52] END   02_toy_N1 rc=0 6s :: PASS — toy DDP correctness, world_size=1, backend=nccl, final_checksum=fe5790d89189
+[21:30:52] START 03_smoke_N1
+[21:30:56] END   03_smoke_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:30:56] parity: FileNotFoundError: [Errno 2] No such file or directory: 'results/p3_tonight_3503458/smoke/P3SMOKE-bf16-r16-s0-N1/run.json'
+[21:30:56] START 04_x05_bf16_N1
+[21:31:00] END   04_x05_bf16_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:31:00] START 04_x05_bf16_te_N1
+[21:31:04] END   04_x05_bf16_te_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:31:04] START 04_x05_fp8_te_N1
+[21:31:08] END   04_x05_fp8_te_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:31:08] START 06_x06smoke_bf16
+[21:31:12] END   06_x06smoke_bf16 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:31:12] START 06_x06smoke_fp32
+[21:31:17] END   06_x06smoke_fp32 rc=1 5s ::   <NO_OTHER_FAILURES>
+[21:31:17] DONE -> results/p3_tonight_3503458.tar.gz  (6.0K)
+[21:36:23] GPUs: 1
+[21:36:23] START 01_pytest
+[21:36:28] END   01_pytest rc=0 5s :: 35 passed in 3.96s
+[21:36:28] START 02_toy_N1
+[21:36:34] END   02_toy_N1 rc=0 6s :: PASS — toy DDP correctness, world_size=1, backend=nccl, final_checksum=fe5790d89189
+[21:36:34] START 03_smoke_N1
+[21:36:39] END   03_smoke_N1 rc=1 5s ::   <NO_OTHER_FAILURES>
+[21:36:39] parity: FileNotFoundError: [Errno 2] No such file or directory: 'results/p3_tonight_3503458/smoke/P3SMOKE-bf16-r16-s0-N1/run.json'
+[21:36:39] START 04_x05_bf16_N1
+[21:36:44] END   04_x05_bf16_N1 rc=1 5s ::   <NO_OTHER_FAILURES>
+[21:36:44] START 04_x05_bf16_te_N1
+[21:36:48] END   04_x05_bf16_te_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:36:48] START 04_x05_fp8_te_N1
+[21:36:52] END   04_x05_fp8_te_N1 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:36:53] START 06_x06smoke_bf16
+[21:36:57] END   06_x06smoke_bf16 rc=1 4s ::   <NO_OTHER_FAILURES>
+[21:36:57] START 06_x06smoke_fp32
+[21:37:02] END   06_x06smoke_fp32 rc=1 5s ::   <NO_OTHER_FAILURES>
+[21:37:02] DONE -> results/p3_tonight_3503458.tar.gz  (6.0K)
+[21:53:04] GPUs: 1
+[21:53:04] START 01_pytest
+[21:53:09] END   01_pytest rc=0 5s :: 35 passed in 3.94s
+[21:53:09] START 02_toy_N1
+[21:53:15] END   02_toy_N1 rc=0 6s :: PASS — toy DDP correctness, world_size=1, backend=nccl, final_checksum=fe5790d89189
+[21:53:15] START 03_smoke_N1
+[21:54:04] END   03_smoke_N1 rc=0 49s :: [P3SMOKE-bf16-r16-s0-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26656559616, 'peak_reserved_bytes': 28240248832} 
+[21:54:04] parity: FileNotFoundError: [Errno 2] No such file or directory: 'results/p3_tonight_3503458/smoke/P3SMOKE-bf16-r16-s0-N4/run.json'
+[21:54:04] START 04_x05_bf16_N1
+[21:54:45] END   04_x05_bf16_N1 rc=0 41s :: [X05MINI-bf16-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26649219584, 'peak_reserved_bytes': 28294774784} median_step=504.0 ms tok/s=32508
+[21:54:45] START 04_x05_bf16_te_N1
+[21:55:34] END   04_x05_bf16_te_N1 rc=0 49s :: [X05MINI-bf16_te-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26680940032, 'peak_reserved_bytes': 28330426368} median_step=699.1 ms tok/s=23436
+[21:55:34] START 04_x05_fp8_te_N1
+[21:56:35] END   04_x05_fp8_te_N1 rc=0 60s :: [X05MINI-fp8_te-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26746451968, 'peak_reserved_bytes': 28468838400} median_step=823.8 ms tok/s=19888
+[21:56:38] START 06_x06smoke_bf16
+[21:57:17] END   06_x06smoke_bf16 rc=0 39s :: [X06SMOKE-full-bf16-s0] COMPLETED: updates=30 attempts=30 ranks_agree=True mem={'peak_allocated_bytes': 49749727744, 'peak_reserved_bytes': 52619640832} 
+[21:57:17] START 06_x06smoke_fp32
+[21:59:38] END   06_x06smoke_fp32 rc=0 141s :: [X06SMOKE-full-fp32-s0] COMPLETED: updates=30 attempts=30 ranks_agree=True mem={'peak_allocated_bytes': 56052709888, 'peak_reserved_bytes': 57579405312} 

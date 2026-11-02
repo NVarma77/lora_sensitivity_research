@@ -1,0 +1,11 @@
+[X06SMOKE-full-bf16-s0] N=1 M=8 A=4 B=32 | trainable=1,543,714,304 (100.000%) | precision=bf16 (team precision.py)
+  eval @ 0: val_loss=2.400337 ppl=11.027 tokens=65408
+  upd 1/30 (attempt 1) loss=2.487512 gnorm=4.801 853 ms
+  upd 2/30 (attempt 2) loss=2.540071 gnorm=4.589 648 ms
+  upd 3/30 (attempt 3) loss=2.396094 gnorm=3.019 645 ms
+  upd 10/30 (attempt 10) loss=2.463143 gnorm=2.241 648 ms
+  eval @ 15: val_loss=2.203761 ppl=9.059 tokens=65408
+  upd 20/30 (attempt 20) loss=2.261476 gnorm=2.116 649 ms
+  upd 30/30 (attempt 30) loss=2.411175 gnorm=2.071 648 ms
+  eval @ 30: val_loss=2.190107 ppl=8.936 tokens=65408
+[X06SMOKE-full-bf16-s0] COMPLETED: updates=30 attempts=30 ranks_agree=True mem={'peak_allocated_bytes': 49749727744, 'peak_reserved_bytes': 52619640832} 

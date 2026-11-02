@@ -1,0 +1,5 @@
+[N=1 A=16] update 0: T11=True T12=True (max|Δg|=8.9e-16) T13=True ranks_agree=True traj=True val=11.3280035499
+[N=1 A=16] update 1: T11=True T12=True (max|Δg|=8.9e-16) T13=True ranks_agree=True traj=True val=11.4011398173
+[N=1 A=16] update 2: T11=True T12=True (max|Δg|=8.9e-16) T13=True ranks_agree=True traj=True val=11.5536376433
+[N=1 A=16] update 3: T11=True T12=True (max|Δg|=4.4e-16) T13=True ranks_agree=True traj=True val=11.7279554695
+PASS — toy DDP correctness, world_size=1, backend=nccl, final_checksum=fe5790d89189

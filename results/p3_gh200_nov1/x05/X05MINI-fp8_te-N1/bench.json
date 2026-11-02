@@ -1,0 +1,21 @@
+{
+  "n": 40,
+  "median_s": 0.823818591888994,
+  "p25_s": 0.8196896719746292,
+  "p75_s": 0.8272290388122201,
+  "mean_s": 0.8268874553963542,
+  "min_s": 0.8040020940825343,
+  "max_s": 0.973480817861855,
+  "tokens_per_update": 16384,
+  "tokens_per_s_median": 19887.873569874075,
+  "samples_per_s_median": 38.8435030661603,
+  "world_size": 1,
+  "precision": "fp8_te",
+  "method": "lora",
+  "lora_rank": 16,
+  "accumulation": 4,
+  "no_sync_all": false,
+  "warmup_updates": 10,
+  "peak_allocated_bytes": 26746451968,
+  "peak_reserved_bytes": 28468838400
+}

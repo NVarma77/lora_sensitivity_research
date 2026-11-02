@@ -1,0 +1,11 @@
+[X06SMOKE-full-fp32-s0] N=1 M=8 A=4 B=32 | trainable=1,543,714,304 (100.000%) | precision=fp32 (team precision.py)
+  eval @ 0: val_loss=2.399717 ppl=11.020 tokens=65408
+  upd 1/30 (attempt 1) loss=2.486182 gnorm=4.790 3736 ms
+  upd 2/30 (attempt 2) loss=2.480673 gnorm=2.812 3748 ms
+  upd 3/30 (attempt 3) loss=2.344561 gnorm=2.633 3749 ms
+  upd 10/30 (attempt 10) loss=2.446938 gnorm=2.141 3753 ms
+  eval @ 15: val_loss=2.192924 ppl=8.961 tokens=65408
+  upd 20/30 (attempt 20) loss=2.252398 gnorm=2.146 3757 ms
+  upd 30/30 (attempt 30) loss=2.403825 gnorm=2.073 3750 ms
+  eval @ 30: val_loss=2.182674 ppl=8.870 tokens=65408
+[X06SMOKE-full-fp32-s0] COMPLETED: updates=30 attempts=30 ranks_agree=True mem={'peak_allocated_bytes': 56052709888, 'peak_reserved_bytes': 57579405312} 

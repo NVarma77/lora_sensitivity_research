@@ -1,0 +1,21 @@
+{
+  "n": 40,
+  "median_s": 0.6991088767535985,
+  "p25_s": 0.6962877870537341,
+  "p75_s": 0.7019007541239262,
+  "mean_s": 0.6985868475749157,
+  "min_s": 0.6840308480896056,
+  "max_s": 0.7082426240667701,
+  "tokens_per_update": 16384,
+  "tokens_per_s_median": 23435.548517251278,
+  "samples_per_s_median": 45.7725556977564,
+  "world_size": 1,
+  "precision": "bf16_te",
+  "method": "lora",
+  "lora_rank": 16,
+  "accumulation": 4,
+  "no_sync_all": false,
+  "warmup_updates": 10,
+  "peak_allocated_bytes": 26680940032,
+  "peak_reserved_bytes": 28330426368
+}

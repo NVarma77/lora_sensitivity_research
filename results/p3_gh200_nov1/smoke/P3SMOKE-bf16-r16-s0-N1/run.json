@@ -1,0 +1,76 @@
+{
+  "run_id": "P3SMOKE-bf16-r16-s0-N1",
+  "status": "COMPLETED",
+  "env": {
+    "hostname": "gh151.hsn.cm.delta.internal.ncsa.edu",
+    "platform": "Linux-6.4.0-150600.23.53-64kb-aarch64-with-glibc2.38",
+    "python": "3.12.9",
+    "torch": "2.10.0+cu129",
+    "cuda": "12.9",
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "nccl": "2.27.5",
+    "gpu": "NVIDIA GH200 120GB",
+    "world_size": 1,
+    "backend": "nccl",
+    "slurm_job_id": "3503458",
+    "slurm_partition": "ghx4-interactive",
+    "code_sha": "088fdb51e17864fe49cc93e35be47d4726d7df22",
+    "git_dirty": true
+  },
+  "audit": {
+    "method": "lora",
+    "trainable_params": 2179072,
+    "total_params": 1545893376,
+    "trainable_pct": 0.1409587513492263,
+    "n_trainable_tensors": 112,
+    "targets": [
+      "q_proj",
+      "v_proj"
+    ],
+    "te_converted_layers": 0,
+    "full_ft_state_bytes_estimate": null
+  },
+  "precision_manifest": {
+    "source": "team precision.py",
+    "mode": "bf16",
+    "backend": "torch_amp",
+    "device_type": "cuda",
+    "autocast_enabled": true,
+    "autocast_dtype": "torch.bfloat16",
+    "grad_scaler": null,
+    "tf32": {
+      "requested_allow_tf32": false,
+      "cuda_matmul_allow_tf32": false,
+      "cudnn_allow_tf32": false,
+      "float32_matmul_precision": "highest"
+    },
+    "versions": {
+      "python": "3.12.9",
+      "torch": "2.10.0+cu129",
+      "cuda": "12.9",
+      "cudnn": 92700,
+      "device": "NVIDIA GH200 120GB"
+    }
+  },
+  "data": {
+    "dataset": "Salesforce/wikitext/wikitext-103-raw-v1@b08601e0",
+    "source": "pilot_runner.build_dataset (P2 stand-in; replace with P1 data.py)",
+    "key": "wt103-b08601e0-qwen-8faed761-L512-T8000000-V128",
+    "train_sha256": "46b5fb88e5cb3f7e343a4bfd1c556046a4d213cd6b354e8575ead53b91f4be3e",
+    "val_sha256": "d948d19e3f8911a044514fbc7ea905d1edd8787ace45b55b0aa811fbea4cba1f"
+  },
+  "n_train_examples": 15625,
+  "n_val_examples": 128,
+  "successful_updates": 50,
+  "attempted_steps": 50,
+  "skipped_steps": 0,
+  "ranks_agree_on_params": true,
+  "final_train_loss": 2.433791009413986,
+  "final_val_loss": 2.2840453295325114,
+  "memory": {
+    "peak_allocated_bytes": 26656559616,
+    "peak_reserved_bytes": 28240248832
+  },
+  "bench": null
+}

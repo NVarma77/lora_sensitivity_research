@@ -1,0 +1,13 @@
+/u/bissoufouanaroua/lora_sensitivity_research/src/p3_ddp_runner.py:124: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  b_zero = all(float(p_.abs().max()) == 0.0 for n, p_ in model.named_parameters() if "lora_B" in n)
+[X05MINI-fp8_te-N1] N=1 M=8 A=4 B=32 | trainable=2,179,072 (0.141%) | precision=fp8_te (team precision.py)
+  upd 1/50 (attempt 1) loss=2.505603 gnorm=0.062 2449 ms
+  upd 2/50 (attempt 2) loss=2.564245 gnorm=0.115 834 ms
+  upd 3/50 (attempt 3) loss=2.441648 gnorm=0.098 824 ms
+  upd 10/50 (attempt 10) loss=2.585502 gnorm=0.093 820 ms
+  upd 20/50 (attempt 20) loss=2.392081 gnorm=0.109 819 ms
+  upd 30/50 (attempt 30) loss=2.521083 gnorm=0.111 829 ms
+  upd 40/50 (attempt 40) loss=2.372512 gnorm=0.111 833 ms
+  upd 50/50 (attempt 50) loss=2.445072 gnorm=0.114 804 ms
+[X05MINI-fp8_te-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26746451968, 'peak_reserved_bytes': 28468838400} median_step=823.8 ms tok/s=19888

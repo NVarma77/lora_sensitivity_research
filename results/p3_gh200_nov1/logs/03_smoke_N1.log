@@ -1,0 +1,16 @@
+/u/bissoufouanaroua/lora_sensitivity_research/src/p3_ddp_runner.py:124: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:836.)
+  b_zero = all(float(p_.abs().max()) == 0.0 for n, p_ in model.named_parameters() if "lora_B" in n)
+[P3SMOKE-bf16-r16-s0-N1] N=1 M=8 A=4 B=32 | trainable=2,179,072 (0.141%) | precision=bf16 (team precision.py)
+  eval @ 0: val_loss=2.400337 ppl=11.027 tokens=65408
+  upd 1/50 (attempt 1) loss=2.487512 gnorm=0.112 1787 ms
+  upd 2/50 (attempt 2) loss=2.551923 gnorm=0.119 503 ms
+  upd 3/50 (attempt 3) loss=2.428074 gnorm=0.098 495 ms
+  upd 10/50 (attempt 10) loss=2.571713 gnorm=0.092 498 ms
+  upd 20/50 (attempt 20) loss=2.381858 gnorm=0.109 509 ms
+  eval @ 25: val_loss=2.303259 ppl=10.007 tokens=65408
+  upd 30/50 (attempt 30) loss=2.509196 gnorm=0.110 506 ms
+  upd 40/50 (attempt 40) loss=2.360006 gnorm=0.114 504 ms
+  upd 50/50 (attempt 50) loss=2.433791 gnorm=0.115 508 ms
+  eval @ 50: val_loss=2.284045 ppl=9.816 tokens=65408
+[P3SMOKE-bf16-r16-s0-N1] COMPLETED: updates=50 attempts=50 ranks_agree=True mem={'peak_allocated_bytes': 26656559616, 'peak_reserved_bytes': 28240248832} 

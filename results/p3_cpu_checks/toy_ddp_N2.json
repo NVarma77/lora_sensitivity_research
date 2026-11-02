@@ -1,0 +1,85 @@
+{
+  "world_size": 2,
+  "backend": "gloo",
+  "accumulation": 8,
+  "updates": [
+    {
+      "update": 0,
+      "T11_ids_match": true,
+      "T12_grad_match": true,
+      "max_abs_grad_err": 1.7763568394002505e-15,
+      "T13_val_match": true,
+      "val_ddp": 11.328003549928852,
+      "val_serial": 11.328003549928852,
+      "ranks_agree": true,
+      "trajectory_match": true,
+      "max_abs_param_err": 2.7755575615628914e-17,
+      "t_global": 184.0,
+      "first_ids": [
+        44,
+        5,
+        43,
+        48
+      ]
+    },
+    {
+      "update": 1,
+      "T11_ids_match": true,
+      "T12_grad_match": true,
+      "max_abs_grad_err": 2.220446049250313e-15,
+      "T13_val_match": true,
+      "val_ddp": 11.401139817256851,
+      "val_serial": 11.40113981725685,
+      "ranks_agree": true,
+      "trajectory_match": true,
+      "max_abs_param_err": 3.469446951953614e-17,
+      "t_global": 192.0,
+      "first_ids": [
+        27,
+        66,
+        93,
+        18
+      ]
+    },
+    {
+      "update": 2,
+      "T11_ids_match": true,
+      "T12_grad_match": true,
+      "max_abs_grad_err": 8.881784197001252e-16,
+      "T13_val_match": true,
+      "val_ddp": 11.553637643302505,
+      "val_serial": 11.553637643302505,
+      "ranks_agree": true,
+      "trajectory_match": true,
+      "max_abs_param_err": 5.551115123125783e-17,
+      "t_global": 181.0,
+      "first_ids": [
+        87,
+        54,
+        8,
+        7
+      ]
+    },
+    {
+      "update": 3,
+      "T11_ids_match": true,
+      "T12_grad_match": true,
+      "max_abs_grad_err": 1.7763568394002505e-15,
+      "T13_val_match": true,
+      "val_ddp": 11.727955469504993,
+      "val_serial": 11.727955469504993,
+      "ranks_agree": true,
+      "trajectory_match": true,
+      "max_abs_param_err": 5.551115123125783e-17,
+      "t_global": 196.0,
+      "first_ids": [
+        37,
+        70,
+        14,
+        17
+      ]
+    }
+  ],
+  "final_checksum": "fe5790d891890297e8669ec0c31fca0cdd9afc9c",
+  "PASS": true
+}
